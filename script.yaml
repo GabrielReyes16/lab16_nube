@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Plantilla de CloudFormation para crear una VPC, una instancia EC2 y un bucket S3
+
+Parameters:
+  KeyName:
+    Description: Nombre del par de llaves SSH para acceder a la instancia EC2
+    Type: String
+
+Resources:
+  VPCReyesPalomino:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: MyVPC_Reyes_Palomino
+
+  SubnetReyesPalomino:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPCReyesPalomino
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: MySubnet_Reyes_Palomino
+
+  InternetGatewayReyesPalomino:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGatewayReyesPalomino:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPCReyesPalomino
+      InternetGatewayId: !Ref InternetGatewayReyesPalomino
+
+  RouteTableReyesPalomino:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPCReyesPalomino
+      Tags:
+        - Key: Name
+          Value: MyRouteTable_Reyes_Palomino
+
+  RouteReyesPalomino:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RouteTableReyesPalomino
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGatewayReyesPalomino
+
+  SubnetRouteTableAssociationReyesPalomino:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetReyesPalomino
+      RouteTableId: !Ref RouteTableReyesPalomino
+
+  SecurityGroupReyesPalomino:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH access
+      VpcId: !Ref VPCReyesPalomino
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: MySecurityGroup_Reyes_Palomino
+
+  InstanciaReyesPalomino:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName: !Ref KeyName  # Utiliza el par?metro KeyName
+      SubnetId: !Ref SubnetReyesPalomino
+      SecurityGroupIds:
+        - !Ref SecurityGroupReyesPalomino
+      ImageId: ami-09040d770ffe2224f
+
+  S3BaldeReyesPalomino:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: s3-balde-unique-name
