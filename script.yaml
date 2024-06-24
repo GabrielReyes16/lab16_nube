@@ -60,12 +60,16 @@ Resources:
   SecurityGroupReyesPalomino:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow SSH access
+      GroupDescription: Allow SSH and HTTP access
       VpcId: !Ref VPCReyesPalomino
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
@@ -75,11 +79,18 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
-      KeyName: !Ref KeyName  # Utiliza el par?metro KeyName
+      KeyName: !Ref KeyName
       SubnetId: !Ref SubnetReyesPalomino
       SecurityGroupIds:
         - !Ref SecurityGroupReyesPalomino
       ImageId: ami-09040d770ffe2224f
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
 
   S3BaldeReyesPalomino:
     Type: AWS::S3::Bucket
